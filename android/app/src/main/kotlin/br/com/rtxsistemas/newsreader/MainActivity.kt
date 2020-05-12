@@ -1,4 +1,4 @@
-package com.example.news_portal
+package br.com.rtxsistemas.newsreader
 
 import io.flutter.embedding.android.FlutterActivity
 

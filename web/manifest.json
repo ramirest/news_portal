@@ -1,11 +1,11 @@
 {
-    "name": "news_portal",
-    "short_name": "news_portal",
+    "name": "newsreader",
+    "short_name": "newsreader",
     "start_url": ".",
     "display": "minimal-ui",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "A news reader for a news portal",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

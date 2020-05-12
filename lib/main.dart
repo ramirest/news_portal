@@ -1,87 +1,127 @@
+import 'dart:convert';
+
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:newsreader/Model/model.dart';
 
-void main() => runApp(LoginApp());
+String apiKey = '4576561238fe403fb04784dcdb55634b';
+Future<List<Article>> fetchNewsArticle() async {
+  final response = await http.get('http://newsapi.org/v2/top-headlines?country=br&apiKey='+apiKey);
+  
+  if (response.statusCode == 200) {
 
-class LoginApp extends StatelessWidget {
+    List articles = json.decode(response.body)['articles'];
+    return articles.map((article) => new Article.fromJson(article)).toList();
+  } else {
+
+    throw Exception("Failed to load article list");
+  }
+}
+
+void main() => runApp(new ArticleScreen());
+
+class ArticleScreen extends StatefulWidget 
+{
+
+  @override
+  State<StatefulWidget> createState() => ArticleScreenState();
+
+}
+
+class ArticleScreenState extends State<ArticleScreen>
+{
+  var listArticles;
+  var refreshKey = GlobalKey<RefreshIndicatorState>();
+
+  @override
+  void initState() { 
+    super.initState();
+    refreshListArticle();
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      routes: {
-        '/': (context) => LoginScreen(),
-      },
+      title: 'F5 Notícias',
+      theme: ThemeData(primarySwatch: Colors.red),
+      home: Scaffold(
+        appBar: AppBar(title: Text('F5 Notícias'),),
+        body: Center(
+          child: RefreshIndicator(
+            key: refreshKey,
+            child: FutureBuilder<List<Article>>(
+              future: listArticles,
+              builder: (context, snapshot){
+                if(snapshot.hasError) {
+                  return Text('Erro: ${snapshot.error}');
+                } else if(snapshot.hasData) {
+                  List<Article> articles = snapshot.data;
+                  return new ListView(
+                    children: articles.map((article) => GestureDetector(
+                      onTap: (){
+
+                      },
+                      child: Card(
+                        elevation: 1.0,
+                        color: Colors.white,
+                        margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 14.0),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 2.0),
+                              width: 100.0,
+                              height: 140.0,
+                              child: Image.asset("assets/news.png"),
+                            ),
+
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  Row(
+                                    children: <Widget>[
+                                      Expanded(
+                                        child: Container(
+                                          margin: const EdgeInsets.only(top: 20.0, bottom: 10.0),
+                                          child: Text('${article.source.name}', style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),),
+                                        ),
+                                      )
+                                    ],
+                                  ),
+
+                                  Container(
+                                    child: Text('${article.description}', style: TextStyle(color: Colors.grey, fontSize: 12.0, fontWeight: FontWeight.bold),),
+                                  ),
+
+                                  Container(
+                                    child: Text('Autor: ${article.author}', style: TextStyle(color: Colors.black, fontSize: 14.0, fontWeight: FontWeight.bold),),
+                                  )
+                                ],
+                              ),
+                            )
+                          ],
+                        ),
+                      ),
+                    )).toList());
+                }
+
+                return CircularProgressIndicator();
+              },
+            ),
+            onRefresh: refreshListArticle),
+        )
+      )
     );
   }
-}
 
-class LoginScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[200],
-      body: Center(
-        child: SizedBox(
-          width: 400,
-          child: Card(
-            child: LoginForm(),
-          ),
-        ),
-      ),
-    );
-  }
-}
+  Future<Null> refreshListArticle() async {
+    refreshKey.currentState?.show(atTop: false);
 
-class LoginForm extends StatefulWidget {
-  @override
-  _LoginFormState createState() => _LoginFormState();
-}
+    setState(() {
+      listArticles = fetchNewsArticle();
+    });
 
-class _LoginFormState extends State<LoginForm> {
-  final _firstNameTextController = TextEditingController();
-  final _lastNameTextController = TextEditingController();
-  final _usernameTextController = TextEditingController();
-
-  double _formProgress = 0;
-
-  @override
-  Widget build(BuildContext context) {
-    return Form(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          LinearProgressIndicator(value: _formProgress),
-          Text('Sign Up', style: Theme
-              .of(context)
-              .textTheme
-              .display1), // display1 changes to headline4 in 1.16
-          Padding(
-            padding: EdgeInsets.all(8.0),
-            child: TextFormField(
-              controller: _firstNameTextController,
-              decoration: InputDecoration(hintText: 'Nome'),
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.all(8.0),
-            child: TextFormField(
-              controller: _lastNameTextController,
-              decoration: InputDecoration(hintText: 'Sobrenome'),
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.all(8.0),
-            child: TextFormField(
-              controller: _usernameTextController,
-              decoration: InputDecoration(hintText: 'Username'),
-            ),
-          ),
-          FlatButton(
-            color: Colors.blue,
-            textColor: Colors.white,
-            onPressed: null,
-            child: Text('Sign up'),
-          ),
-        ],
-      ),
-    );
+    return null;
   }
 }
